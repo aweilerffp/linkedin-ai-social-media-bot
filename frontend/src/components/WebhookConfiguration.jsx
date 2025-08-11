@@ -182,7 +182,7 @@ const WebhookConfiguration = () => {
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook</h2>
           <p className="text-gray-600 mt-2">
-            Configure your meeting recorder to send transcripts to this webhook endpoint
+            Configure your meeting recorder to send transcripts to this webhook endpoint. Test button is now enabled!
           </p>
         </div>
 
