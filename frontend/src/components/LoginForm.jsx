@@ -103,8 +103,15 @@ function LoginForm() {
           </button>
         </form>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-md">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Test Accounts:</h3>
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="flex items-center mb-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+            <h3 className="text-sm font-medium text-blue-800">Demo Mode Active</h3>
+          </div>
+          <p className="text-xs text-blue-700 mb-3">
+            Using mock authentication for demonstration. No real backend required.
+          </p>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Test Accounts:</h4>
           <div className="text-sm text-gray-600 space-y-1">
             <p>alice@example.com / testpass123</p>
             <p>bob@example.com / testpass456</p>
@@ -112,7 +119,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={fillTestAccount}
-            className="mt-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300 transition-colors"
+            className="mt-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded hover:bg-blue-200 transition-colors"
           >
             Fill Alice's Account
           </button>

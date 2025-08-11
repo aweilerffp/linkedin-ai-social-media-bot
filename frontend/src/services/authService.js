@@ -1,8 +1,19 @@
 import apiClient from './apiClient';
+import { mockAuthService } from './mockAuthService';
+
+// Check if we should use mock mode (when backend is not available)
+const shouldUseMockMode = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  return !apiUrl || apiUrl.includes('vercel.app') || import.meta.env.VITE_USE_MOCK_AUTH === 'true';
+};
 
 export const authService = {
   // Authentication
   async login(email, password) {
+    if (shouldUseMockMode()) {
+      return await mockAuthService.login(email, password);
+    }
+    
     const response = await apiClient.post('/auth/login', { email, password });
     const { accessToken, refreshToken, user } = response.data.data;
     
@@ -14,6 +25,10 @@ export const authService = {
   },
 
   async register(userData) {
+    if (shouldUseMockMode()) {
+      return await mockAuthService.register(userData);
+    }
+    
     const response = await apiClient.post('/auth/register', userData);
     const { accessToken, refreshToken, user } = response.data.data;
     
@@ -25,6 +40,10 @@ export const authService = {
   },
 
   async logout() {
+    if (shouldUseMockMode()) {
+      return await mockAuthService.logout();
+    }
+    
     try {
       await apiClient.post('/auth/logout');
     } catch (error) {
@@ -37,6 +56,10 @@ export const authService = {
   },
 
   async refreshToken() {
+    if (shouldUseMockMode()) {
+      return await mockAuthService.refreshToken();
+    }
+    
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) throw new Error('No refresh token available');
 
@@ -51,6 +74,10 @@ export const authService = {
 
   // Profile management
   async getProfile() {
+    if (shouldUseMockMode()) {
+      return await mockAuthService.getProfile();
+    }
+    
     const response = await apiClient.get('/auth/profile');
     return response.data;
   },
@@ -119,6 +146,9 @@ export const authService = {
 
   // Utility methods
   isAuthenticated() {
+    if (shouldUseMockMode()) {
+      return mockAuthService.isAuthenticated();
+    }
     // Check both possible token names
     return !!localStorage.getItem('accessToken') || !!localStorage.getItem('token');
   },
