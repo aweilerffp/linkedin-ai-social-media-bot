@@ -34,31 +34,8 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Generate the webhook URL based on the backend API
-    let baseUrl = process.env.REACT_APP_API_URL;
-    
-    // If no API URL is configured, try to determine production URL
-    if (!baseUrl) {
-      const currentHost = window.location.host;
-      
-      if (currentHost.includes('vercel.app') || currentHost.includes('github.io')) {
-        // For Vercel deployment, try common backend patterns
-        if (currentHost === 'linkedin-ai-social-media-bot.vercel.app') {
-          baseUrl = 'https://linkedin-ai-social-media-bot-backend.vercel.app';
-        } else if (currentHost.includes('frontend-')) {
-          // Try backend subdomain
-          baseUrl = currentHost.replace('frontend-', 'backend-');
-          baseUrl = `https://${baseUrl}`;
-        } else {
-          // Fallback: try adding -api or -backend suffix
-          baseUrl = `https://${currentHost.replace('.vercel.app', '-api.vercel.app')}`;
-        }
-      } else {
-        // Local development or other hosting - try Hetzner server first
-        baseUrl = 'http://5.78.46.19:3002';
-      }
-    }
-    
+    // Always use the working Hetzner server webhook endpoint
+    const baseUrl = 'http://5.78.46.19:3002';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
