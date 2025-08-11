@@ -35,9 +35,35 @@ const WebhookConfiguration = () => {
 
   const generateWebhookUrl = () => {
     // Generate the webhook URL based on the backend API
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+    let baseUrl = process.env.REACT_APP_API_URL;
+    
+    // If no API URL is configured, try to determine production URL
+    if (!baseUrl) {
+      const currentHost = window.location.host;
+      
+      if (currentHost.includes('vercel.app') || currentHost.includes('github.io')) {
+        // For Vercel deployment, try common backend patterns
+        if (currentHost === 'linkedin-ai-social-media-bot.vercel.app') {
+          baseUrl = 'https://linkedin-ai-social-media-bot-backend.vercel.app';
+        } else if (currentHost.includes('frontend-')) {
+          // Try backend subdomain
+          baseUrl = currentHost.replace('frontend-', 'backend-');
+          baseUrl = `https://${baseUrl}`;
+        } else {
+          // Fallback: try adding -api or -backend suffix
+          baseUrl = `https://${currentHost.replace('.vercel.app', '-api.vercel.app')}`;
+        }
+      } else {
+        // Local development or other hosting
+        baseUrl = 'http://localhost:3001';
+      }
+    }
+    
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
+    
+    // Log for debugging
+    console.log('Generated webhook URL:', generatedUrl);
   };
 
   const saveWebhookConfiguration = async () => {
@@ -137,14 +163,17 @@ const WebhookConfiguration = () => {
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="https://your-domain.com/api/webhooks/meeting-recorder"
+                placeholder="https://your-backend-domain.com/api/webhooks/meeting-recorder"
               />
               <button
                 onClick={generateWebhookUrl}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
               >
-                Generate URL
+                Auto-Generate
               </button>
+            </div>
+            <div className="mt-2 text-sm text-orange-600">
+              ⚠️ Please update this URL to point to your deployed backend API endpoint
             </div>
             <p className="text-sm text-gray-500 mt-2">
               This is the URL your meeting recorder should POST transcript data to
@@ -171,6 +200,20 @@ const WebhookConfiguration = () => {
                 }`}
               />
             </button>
+          </div>
+
+          {/* Backend Deployment Info */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-yellow-900 mb-2">🚀 Backend Deployment Required</h3>
+            <p className="text-sm text-yellow-800 mb-3">
+              The webhook endpoint needs a deployed backend API. Here are your options:
+            </p>
+            <div className="space-y-2 text-sm text-yellow-800">
+              <div>• <strong>Vercel:</strong> Deploy backend folder to get <code>https://your-project-api.vercel.app</code></div>
+              <div>• <strong>Railway:</strong> Connect GitHub repo for <code>https://your-app.railway.app</code></div>
+              <div>• <strong>Heroku:</strong> Deploy for <code>https://your-app.herokuapp.com</code></div>
+              <div>• <strong>Custom:</strong> Use your own domain</div>
+            </div>
           </div>
 
           {/* Expected Payload Format */}
