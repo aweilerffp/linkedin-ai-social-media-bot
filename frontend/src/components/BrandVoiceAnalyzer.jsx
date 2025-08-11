@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import contentPatternExtractor from '../services/contentPatternExtractor';
 import brandVoiceService from '../services/brandVoiceService';
+// Updated: 2025-08-11 - Fixed analyze button issue
 
 const BrandVoiceAnalyzer = ({ onAnalysisComplete, initialData = null }) => {
   const [currentSection, setCurrentSection] = useState('demo_videos');
@@ -429,7 +430,7 @@ const BrandVoiceAnalyzer = ({ onAnalysisComplete, initialData = null }) => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Brand Voice Analysis</h1>
         <p className="text-gray-600">
-          Build your company knowledge base by analyzing actual content samples
+          Build your company knowledge base by providing actual content samples
         </p>
         
         <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
