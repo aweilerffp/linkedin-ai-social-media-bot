@@ -23,25 +23,38 @@ app.get('/health', (req, res) => {
 // Meeting recorder webhook endpoint
 app.post('/api/webhooks/meeting-recorder', async (req, res) => {
   try {
-    console.log('📞 Meeting recorder webhook received:', {
+    console.log('📞 Meeting recorder webhook received (v2):', {
       timestamp: new Date().toISOString(),
       body: req.body
     });
 
-    const { event_type, timestamp, data } = req.body;
+    const { event_type, timestamp, data, session_id, trigger, title, transcript } = req.body;
 
-    // Validate required fields
-    if (!event_type || !data) {
+    // Handle different webhook formats
+    let meetingData;
+    if (event_type && data) {
+      // Frontend test format
+      meetingData = data;
+    } else if (session_id && trigger) {
+      // Read.ai format
+      meetingData = {
+        meeting_id: session_id,
+        title: title || 'Meeting',
+        transcript: transcript,
+        trigger: trigger
+      };
+    } else {
       return res.status(400).json({
         error: 'Missing required fields',
-        required: ['event_type', 'data']
+        required: 'Either (event_type + data) or (session_id + trigger)',
+        received: Object.keys(req.body)
       });
     }
 
     // Generate marketing hooks
     const mockMarketingHooks = [
       {
-        hook: `Transform your ${data.title || 'meeting'} insights into compelling content`,
+        hook: `Transform your ${meetingData.title || 'meeting'} insights into compelling content`,
         confidence: 0.92,
         reasoning: "Meeting discussions reveal authentic business challenges and solutions",
         suggested_post_type: "insight_story"
@@ -64,13 +77,13 @@ app.post('/api/webhooks/meeting-recorder', async (req, res) => {
       success: true,
       webhook_id: `wh_${Date.now()}`,
       processed_at: new Date().toISOString(),
-      event_type,
+      event_type: event_type || trigger,
       status: 'processed',
       processing_time_ms: Math.floor(Math.random() * 500) + 100,
       data: {
-        meeting_id: data.meeting_id,
-        title: data.title || 'Untitled Meeting',
-        transcript_length: data.transcript?.length || 0,
+        meeting_id: meetingData.meeting_id,
+        title: meetingData.title || 'Untitled Meeting',
+        transcript_length: meetingData.transcript?.length || 0,
         marketing_hooks_generated: mockMarketingHooks.length,
         marketing_hooks: mockMarketingHooks,
         company_context: {

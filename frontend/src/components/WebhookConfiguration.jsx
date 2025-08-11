@@ -34,8 +34,19 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Always use the working Hetzner server webhook endpoint
-    const baseUrl = 'http://5.78.46.19:3002';
+    // Use HTTPS Vercel backend for frontend testing (avoids HTTPS→HTTP mixed content issues)
+    // Use HTTP Hetzner server for actual meeting recorder services
+    const currentHost = window.location.host;
+    
+    let baseUrl;
+    if (currentHost.includes('vercel.app') || currentHost.includes('localhost:5173')) {
+      // For frontend testing from HTTPS, use Vercel backend
+      baseUrl = 'https://linkedin-ai-social-media-bot-backend.vercel.app';
+    } else {
+      // For meeting recorder services, use Hetzner server
+      baseUrl = 'http://5.78.46.19:3002';
+    }
+    
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
@@ -215,16 +226,15 @@ const WebhookConfiguration = () => {
           </div>
 
           {/* Backend Deployment Info */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-yellow-900 mb-2">🚀 Backend Deployment Required</h3>
-            <p className="text-sm text-yellow-800 mb-3">
-              The webhook endpoint needs a deployed backend API. Here are your options:
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-blue-900 mb-2">🚀 Dual Webhook Setup</h3>
+            <p className="text-sm text-blue-800 mb-3">
+              This app uses two webhook endpoints for optimal compatibility:
             </p>
-            <div className="space-y-2 text-sm text-yellow-800">
-              <div>• <strong>Vercel:</strong> Deploy backend folder to get <code>https://your-project-api.vercel.app</code></div>
-              <div>• <strong>Railway:</strong> Connect GitHub repo for <code>https://your-app.railway.app</code></div>
-              <div>• <strong>Heroku:</strong> Deploy for <code>https://your-app.herokuapp.com</code></div>
-              <div>• <strong>Custom:</strong> Use your own domain</div>
+            <div className="space-y-2 text-sm text-blue-800">
+              <div>• <strong>Frontend Testing:</strong> Uses HTTPS Vercel backend (avoids mixed content issues)</div>
+              <div>• <strong>Meeting Recorders:</strong> Use HTTP Hetzner server at <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>Auto-Generate:</strong> Automatically selects the right endpoint based on your current location</div>
             </div>
           </div>
 
