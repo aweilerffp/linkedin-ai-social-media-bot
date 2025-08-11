@@ -1,6 +1,6 @@
 import express from 'express';
 import { AIController } from '../controllers/AIController.js';
-import { authMiddleware } from '../middleware/authentication.js';
+import { authenticate as authMiddleware } from '../middleware/authentication.js';
 import { validateRequest } from '../middleware/validation.js';
 import Joi from 'joi';
 
@@ -47,7 +47,7 @@ const companyProfileSchema = Joi.object({
     visual_elements: Joi.object({
       common_elements: Joi.array().items(Joi.string()).max(20)
     }),
-    restrictions: Joi.array().items(Joi.string()).max(10
+    restrictions: Joi.array().items(Joi.string()).max(10)
   }),
   slack_config: Joi.object({
     channel: Joi.string().pattern(/^#[a-z0-9-_]+$/),
