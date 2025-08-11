@@ -34,19 +34,8 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Use HTTPS Vercel backend for frontend testing (avoids HTTPS→HTTP mixed content issues)
-    // Use HTTP Hetzner server for actual meeting recorder services
-    const currentHost = window.location.host;
-    
-    let baseUrl;
-    if (currentHost.includes('vercel.app') || currentHost.includes('localhost:5173')) {
-      // For frontend testing from HTTPS, use Vercel backend
-      baseUrl = 'https://linkedin-ai-social-media-bot-backend.vercel.app';
-    } else {
-      // For meeting recorder services, use Hetzner server
-      baseUrl = 'http://5.78.46.19:3002';
-    }
-    
+    // Temporarily use Hetzner server for all testing until Vercel backend is deployed
+    const baseUrl = 'http://5.78.46.19:3002';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
