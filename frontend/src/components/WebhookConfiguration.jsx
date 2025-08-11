@@ -34,8 +34,9 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Temporarily use Hetzner server for all testing until Vercel backend is deployed
-    const baseUrl = 'http://5.78.46.19:3002';
+    // Use HTTPS tunnel for frontend testing (solves mixed content issues)
+    // This tunnel proxies to the HTTP Hetzner server
+    const baseUrl = 'https://3d76f8e859cd94.lhr.life';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
@@ -215,15 +216,16 @@ const WebhookConfiguration = () => {
           </div>
 
           {/* Backend Deployment Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-blue-900 mb-2">🚀 Dual Webhook Setup</h3>
-            <p className="text-sm text-blue-800 mb-3">
-              This app uses two webhook endpoints for optimal compatibility:
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-green-900 mb-2">✅ HTTPS Webhook Ready</h3>
+            <p className="text-sm text-green-800 mb-3">
+              Webhook endpoints are now available with full HTTPS support:
             </p>
-            <div className="space-y-2 text-sm text-blue-800">
-              <div>• <strong>Frontend Testing:</strong> Uses HTTPS Vercel backend (avoids mixed content issues)</div>
-              <div>• <strong>Meeting Recorders:</strong> Use HTTP Hetzner server at <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Auto-Generate:</strong> Automatically selects the right endpoint based on your current location</div>
+            <div className="space-y-2 text-sm text-green-800">
+              <div>• <strong>HTTPS (Production):</strong> <code>https://3d76f8e859cd94.lhr.life/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>HTTP (Fallback):</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>Auto-Generate:</strong> Uses HTTPS endpoint to prevent mixed content blocking</div>
+              <div>• <strong>Meeting Recorders:</strong> Can use either HTTP or HTTPS endpoint</div>
             </div>
           </div>
 
