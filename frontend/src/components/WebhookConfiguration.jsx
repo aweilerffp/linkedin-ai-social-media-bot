@@ -54,8 +54,8 @@ const WebhookConfiguration = () => {
           baseUrl = `https://${currentHost.replace('.vercel.app', '-api.vercel.app')}`;
         }
       } else {
-        // Local development or other hosting
-        baseUrl = 'http://localhost:3001';
+        // Local development or other hosting - try Hetzner server first
+        baseUrl = 'http://5.78.46.19:3002';
       }
     }
     
