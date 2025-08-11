@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuthFixed';
+import BrandVoiceAnalyzer from '../components/BrandVoiceAnalyzer';
 
 const STEPS = {
   COMPANY_INFO: 'company_info',
+  BRAND_VOICE: 'brand_voice',
   CONNECT_PLATFORMS: 'connect_platforms',
   COMPLETE: 'complete'
 };
@@ -17,12 +19,19 @@ function OnboardingFlow() {
     description: '',
     teamSize: ''
   });
+  const [brandVoiceData, setBrandVoiceData] = useState(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState([]);
 
   const handleCompanySubmit = (e) => {
     e.preventDefault();
     // In a real app, this would save to backend
     console.log('Company data:', companyData);
+    setCurrentStep(STEPS.BRAND_VOICE);
+  };
+
+  const handleBrandVoiceComplete = (analysisResult) => {
+    setBrandVoiceData(analysisResult);
+    console.log('Brand voice analysis:', analysisResult);
     setCurrentStep(STEPS.CONNECT_PLATFORMS);
   };
 
@@ -39,14 +48,30 @@ function OnboardingFlow() {
     // Mark onboarding as complete
     localStorage.setItem('onboarding_complete', 'true');
     localStorage.setItem('company_data', JSON.stringify(companyData));
+    localStorage.setItem('brand_voice_data', JSON.stringify(brandVoiceData));
     localStorage.setItem('connected_platforms', JSON.stringify(connectedPlatforms));
     
     // In a real app, this would save to backend via API
-    console.log('Onboarding completed:', { companyData, connectedPlatforms });
+    console.log('Onboarding completed:', { companyData, brandVoiceData, connectedPlatforms });
     
     // Reload to trigger app state change
     window.location.reload();
   };
+
+  const renderBrandVoice = () => (
+    <div className="max-w-full">
+      <BrandVoiceAnalyzer 
+        onAnalysisComplete={handleBrandVoiceComplete}
+        initialData={{
+          additional_context: {
+            industry: companyData.industry,
+            company_stage: companyData.teamSize === '1-5' ? 'startup' : 
+                          companyData.teamSize === '200+' ? 'established' : 'growth'
+          }
+        }}
+      />
+    </div>
+  );
 
   const renderCompanyInfo = () => (
     <div className="max-w-2xl mx-auto">
@@ -228,13 +253,21 @@ function OnboardingFlow() {
         <div className="text-6xl mb-4">🎉</div>
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Setup Complete!</h1>
         <p className="text-gray-600 mb-6">
-          Your Social Media Poster account is ready to go. You can now create posts, schedule content, and track your social media performance.
+          Your Social Media Poster account is ready to go. We've analyzed your brand voice and built a comprehensive knowledge base to ensure all generated content matches your unique style.
         </p>
+        
+        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+          <h3 className="font-semibold mb-2">✨ Brand Voice Analyzed</h3>
+          <p className="text-sm text-gray-700">
+            Your content patterns have been extracted and will be used to generate authentic, on-brand social media posts.
+          </p>
+        </div>
         
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
           <h3 className="font-semibold mb-2">What's Next?</h3>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• Create your first social media post</li>
+            <li>• Create your first AI-powered social media post</li>
+            <li>• Review your brand voice patterns</li>
             <li>• Set up a posting schedule</li>
             <li>• Explore analytics and insights</li>
             <li>• Invite team members</li>
@@ -277,6 +310,7 @@ function OnboardingFlow() {
       </div>
 
       {currentStep === STEPS.COMPANY_INFO && renderCompanyInfo()}
+      {currentStep === STEPS.BRAND_VOICE && renderBrandVoice()}
       {currentStep === STEPS.CONNECT_PLATFORMS && renderConnectPlatforms()}
       {currentStep === STEPS.COMPLETE && renderComplete()}
     </div>

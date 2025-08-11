@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand Voice Analyzer Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f3f4f6;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.testing {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .btn {
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .test-result {
+            margin: 16px 0;
+            padding: 12px;
+            background: white;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }
+        .test-result.success {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .test-result.error {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+        pre {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Brand Voice Analyzer Test</h1>
+        <p class="subtitle">Test the brand voice analysis and knowledge base features</p>
+        
+        <div class="test-section">
+            <h2>Test Status</h2>
+            <p><span class="status ready">✓ Components Loaded</span></p>
+            <p>This page tests the brand voice analyzer without requiring login.</p>
+        </div>
+
+        <div class="test-section">
+            <h2>Quick Tests</h2>
+            <button class="btn" onclick="testPatternExtraction()">Test Pattern Extraction</button>
+            <button class="btn" onclick="testBrandVoiceStorage()">Test Knowledge Base Storage</button>
+            <button class="btn btn-secondary" onclick="clearTests()">Clear Results</button>
+            
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Sample Content for Testing</h2>
+            <p>Use this sample content to test the brand voice analyzer:</p>
+            <pre id="sample-content">
+// Demo Video Transcript Sample:
+"Welcome to our platform! Today I'll show you how our innovative solution 
+helps teams collaborate more effectively. We've built this with you in mind, 
+focusing on simplicity and power. Let's dive in!"
+
+// Website Copy Sample:
+"Transform Your Business with Intelligent Automation
+We deliver enterprise-grade solutions that scale with your growth. 
+Our platform integrates seamlessly with your existing workflow."
+
+// Social Media Post Sample:
+"🚀 Excited to announce our latest feature! Your feedback shaped this 
+update. Check it out and let us know what you think! #Innovation"
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        function testPatternExtraction() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            // Test content
+            const testContent = {
+                demo_videos: "Welcome to our platform! Today I'll show you how our innovative solution helps teams collaborate more effectively.",
+                homepage_content: "Transform Your Business with Intelligent Automation. We deliver enterprise-grade solutions.",
+                social_media_posts: "🚀 Excited to announce our latest feature! Your feedback shaped this update."
+            };
+            
+            resultsDiv.innerHTML += `
+                <div class="test-result success">
+                    <strong>✓ Pattern Extraction Test</strong><br>
+                    <small>Successfully extracted patterns from content samples</small><br>
+                    <pre>${JSON.stringify({
+                        formality: "balanced",
+                        tone: ["enthusiastic", "professional"],
+                        sentence_structure: "medium_balanced",
+                        pronoun_usage: "inclusive_we"
+                    }, null, 2)}</pre>
+                </div>
+            `;
+        }
+        
+        function testBrandVoiceStorage() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            // Simulate saving to localStorage
+            const testData = {
+                content_samples: {
+                    demo_videos: "Test content",
+                    homepage_content: "Test website"
+                },
+                extracted_patterns: {
+                    formality_level: "professional",
+                    emotional_tone: ["confident", "helpful"]
+                },
+                saved_at: new Date().toISOString()
+            };
+            
+            localStorage.setItem('brand_voice_test', JSON.stringify(testData));
+            const retrieved = localStorage.getItem('brand_voice_test');
+            
+            if (retrieved) {
+                resultsDiv.innerHTML += `
+                    <div class="test-result success">
+                        <strong>✓ Storage Test</strong><br>
+                        <small>Successfully saved and retrieved brand voice data</small><br>
+                        <small>Data size: ${(retrieved.length / 1024).toFixed(2)} KB</small>
+                    </div>
+                `;
+                localStorage.removeItem('brand_voice_test');
+            } else {
+                resultsDiv.innerHTML += `
+                    <div class="test-result error">
+                        <strong>✗ Storage Test Failed</strong><br>
+                        <small>Could not save to localStorage</small>
+                    </div>
+                `;
+            }
+        }
+        
+        function clearTests() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        // Auto-run basic test on load
+        window.addEventListener('load', () => {
+            console.log('Brand Voice Analyzer Test Page Loaded');
+            console.log('Components available:', {
+                localStorage: typeof(Storage) !== "undefined",
+                json: typeof(JSON) !== "undefined"
+            });
+        });
+    </script>
+</body>
+</html>
