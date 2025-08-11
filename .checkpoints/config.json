@@ -1,0 +1,35 @@
+{
+  "maxCheckpoints": 10,
+  "autoName": true,
+  "ignorePatterns": [
+    ".git",
+    ".checkpoints",
+    "node_modules",
+    ".env",
+    ".env.*",
+    "*.log",
+    ".DS_Store",
+    "Thumbs.db",
+    "__pycache__",
+    "*.pyc",
+    ".vscode",
+    ".idea",
+    "dist",
+    "build",
+    "coverage",
+    ".nyc_output",
+    ".next",
+    ".nuxt",
+    ".cache",
+    "tmp",
+    "temp"
+  ],
+  "additionalIgnores": [],
+  "forceInclude": [],
+  "nameTemplate": "checkpoint_{timestamp}",
+  "incremental": {
+    "enabled": true,
+    "fullSnapshotInterval": 5,
+    "maxChainLength": 20
+  }
+}

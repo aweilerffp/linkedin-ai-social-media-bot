@@ -90,7 +90,10 @@ const getDeliveriesSchema = {
   }),
 };
 
-// All routes require authentication and team membership
+// Meeting recorder webhook (public endpoint - no auth required)
+router.post('/meeting-recorder', WebhookController.handleMeetingRecorderWebhook);
+
+// All other routes require authentication and team membership
 router.use(authenticate);
 router.use(requireTeam);
 

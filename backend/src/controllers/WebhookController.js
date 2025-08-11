@@ -1,7 +1,9 @@
 import { webhookConfigService } from '../services/webhook/WebhookConfigService.js';
 import { webhookService } from '../services/webhook/WebhookService.js';
+import { marketingHookGenerator } from '../services/ai/MarketingHookGenerator.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { logger } from '../utils/logger.js';
+import crypto from 'crypto';
 
 export class WebhookController {
   /**
@@ -363,6 +365,206 @@ export class WebhookController {
       });
     } catch (error) {
       next(error);
+    }
+  }
+
+  /**
+   * Handle meeting recorder webhook (public endpoint)
+   */
+  static async handleMeetingRecorderWebhook(req, res, next) {
+    try {
+      logger.info('Received meeting recorder webhook:', {
+        headers: req.headers,
+        bodyKeys: Object.keys(req.body || {})
+      });
+
+      // Validate webhook payload structure
+      const { event_type, timestamp, data } = req.body;
+      
+      if (!event_type || !timestamp || !data) {
+        throw new ApiError(400, 'Invalid webhook payload. Required fields: event_type, timestamp, data');
+      }
+
+      // Only process meeting completion events
+      if (event_type !== 'meeting.completed') {
+        logger.info('Ignoring non-completion event:', event_type);
+        return res.status(200).json({
+          success: true,
+          message: 'Event acknowledged but not processed'
+        });
+      }
+
+      // Validate meeting data
+      const { meeting_id, transcript, title, participants } = data;
+      
+      if (!meeting_id || !transcript) {
+        throw new ApiError(400, 'Invalid meeting data. Required fields: meeting_id, transcript');
+      }
+
+      logger.info('Processing meeting completion:', {
+        meeting_id,
+        title: title || 'Untitled Meeting',
+        transcript_length: transcript.length,
+        participants_count: participants ? participants.length : 0
+      });
+
+      // Get company data from stored onboarding data
+      // In production, this would query the database based on webhook authentication
+      const companyData = await WebhookController.getCompanyData(req);
+
+      // Format transcript data for the marketing hook generator
+      const transcriptData = {
+        id: meeting_id,
+        transcript_content: transcript,
+        meeting_date: new Date(timestamp).toISOString().split('T')[0],
+        metadata: {
+          meeting_type: title || 'Meeting',
+          meeting_goal: 'Extract marketing insights',
+          duration: data.duration,
+          participants: participants
+        }
+      };
+
+      // Process the meeting transcript to extract marketing hooks using the real AI service
+      const processingResult = await marketingHookGenerator.generateMarketingHooks(
+        transcriptData,
+        companyData
+      );
+
+      // Store the webhook event (in production, save to database)
+      const webhookEvent = {
+        id: Date.now(),
+        event_type,
+        timestamp,
+        meeting_id,
+        processed_at: new Date().toISOString(),
+        status: 'processed',
+        marketing_hooks: processingResult.hooks || [],
+        processing_time: processingResult.processingTime || 0
+      };
+
+      logger.info('Webhook processed successfully:', {
+        meeting_id,
+        hooks_generated: processingResult.insights ? processingResult.insights.length : 0,
+        processing_time: processingResult.metadata?.processing_time_ms
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Meeting transcript processed successfully',
+        data: {
+          meeting_id,
+          hooks_generated: processingResult.insights ? processingResult.insights.length : 0,
+          processing_time: processingResult.metadata?.processing_time_ms,
+          marketing_hooks: processingResult.insights || [],
+          metadata: processingResult.metadata
+        }
+      });
+
+    } catch (error) {
+      logger.error('Meeting recorder webhook processing error:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Get company data from various sources (onboarding data, database, etc.)
+   */
+  static async getCompanyData(req) {
+    try {
+      // For now, simulate getting company data from localStorage/onboarding
+      // In production, this would be retrieved from database based on webhook auth
+      
+      // Try to get from headers if webhook includes company identifier
+      const companyId = req.headers['x-company-id'] || 'default';
+      
+      // Simulate company profile structure expected by MarketingHookGenerator
+      const defaultCompanyProfile = {
+        id: companyId,
+        company_name: 'Demo Company',
+        industry: 'Technology',
+        brand_voice: {
+          tone: ['professional', 'confident', 'helpful'],
+          keywords: ['innovation', 'efficiency', 'collaboration', 'growth'],
+          prohibited_terms: ['revolutionary', 'disruptive', 'game-changing']
+        },
+        content_pillars: [
+          {
+            title: 'Team Collaboration & Productivity',
+            description: 'Tools and strategies for better team performance'
+          },
+          {
+            title: 'Business Strategy & Decision Making',
+            description: 'Data-driven insights for strategic decisions'
+          },
+          {
+            title: 'Process Optimization & Efficiency',
+            description: 'Streamlining operations and workflows'
+          }
+        ],
+        target_personas: [
+          {
+            name: 'Business Leaders',
+            pain_points: ['inefficient processes', 'poor team communication', 'slow decision making'],
+            emotions: ['concern', 'optimism', 'confidence']
+          },
+          {
+            name: 'Team Managers',
+            pain_points: ['team coordination', 'productivity tracking', 'meeting effectiveness'],
+            emotions: ['responsibility', 'achievement', 'collaboration']
+          }
+        ],
+        evaluation_questions: [
+          'What specific problem does this insight solve?',
+          'How does this improve team collaboration?',
+          'What measurable impact could this have?',
+          'How can teams implement this insight?'
+        ]
+      };
+
+      // In production, you would:
+      // 1. Authenticate the webhook request
+      // 2. Get the company ID from the authenticated request
+      // 3. Query the database for the company's onboarding data
+      // 4. Transform the onboarding data into the expected format
+      
+      logger.info('Retrieved company data for webhook processing', {
+        company_id: companyId,
+        company_name: defaultCompanyProfile.company_name
+      });
+
+      return defaultCompanyProfile;
+
+    } catch (error) {
+      logger.error('Error retrieving company data:', error);
+      
+      // Return minimal fallback company data
+      return {
+        id: 'fallback',
+        company_name: 'Unknown Company',
+        industry: 'General Business',
+        brand_voice: {
+          tone: ['professional'],
+          keywords: ['business', 'team', 'growth'],
+          prohibited_terms: []
+        },
+        content_pillars: [
+          {
+            title: 'Business Insights',
+            description: 'General business insights and learnings'
+          }
+        ],
+        target_personas: [
+          {
+            name: 'Business Professionals',
+            pain_points: ['efficiency', 'communication'],
+            emotions: ['professional', 'collaborative']
+          }
+        ],
+        evaluation_questions: [
+          'What insight can be shared with the business community?'
+        ]
+      };
     }
   }
 }
