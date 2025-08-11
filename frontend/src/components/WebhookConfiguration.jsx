@@ -98,33 +98,48 @@ const WebhookConfiguration = () => {
 
     setTestingWebhook(true);
     try {
-      // Simulate webhook test
+      // Create test payload
       const testPayload = {
         event_type: 'meeting.completed',
         timestamp: new Date().toISOString(),
         data: {
           meeting_id: 'test_' + Date.now(),
-          transcript: 'This is a test transcript from the meeting recorder webhook.',
+          transcript: 'This is a test transcript from the meeting recorder webhook. We discussed our new product features and how to improve user engagement through better onboarding experiences.',
           duration: 1800, // 30 minutes
           participants: ['test@example.com'],
-          title: 'Test Meeting'
+          title: 'Test Meeting - Product Strategy'
         }
       };
 
-      // In a real app, this would make an API call to test the webhook
-      // await fetch(webhookUrl, {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(testPayload)
-      // });
+      console.log('Testing webhook:', webhookUrl, testPayload);
+
+      // Make actual API call to test the webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload)
+      });
+
+      let responseData;
+      const responseText = await response.text();
+      
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { message: responseText };
+      }
+
+      console.log('Webhook response:', response.status, responseData);
 
       // Add test event to local events
       const newEvent = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
         event_type: 'meeting.completed',
-        status: 'success',
-        test: true
+        status: response.ok ? 'success' : 'failed',
+        test: true,
+        response_status: response.status,
+        response_data: responseData
       };
 
       const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
@@ -132,10 +147,30 @@ const WebhookConfiguration = () => {
       localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
       loadWebhookEvents();
 
-      toast.success('Webhook test completed successfully!');
+      if (response.ok) {
+        toast.success(`Webhook test successful! Generated ${responseData?.data?.marketing_hooks?.length || 0} marketing hooks.`);
+      } else {
+        toast.error(`Webhook test failed: ${responseData.error || 'Unknown error'}`);
+      }
     } catch (error) {
-      toast.error('Webhook test failed');
       console.error('Test error:', error);
+      
+      // Add failed event to local events
+      const newEvent = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        event_type: 'meeting.completed',
+        status: 'failed',
+        test: true,
+        error: error.message
+      };
+
+      const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
+      events.unshift(newEvent);
+      localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
+      loadWebhookEvents();
+
+      toast.error(`Webhook test failed: ${error.message}`);
     } finally {
       setTestingWebhook(false);
     }
@@ -253,11 +288,11 @@ const WebhookConfiguration = () => {
             
             <button
               onClick={testWebhook}
-              disabled={testingWebhook || !webhookUrl || !isEnabled}
+              disabled={testingWebhook || !webhookUrl}
               className={`px-6 py-2 rounded-md font-medium border ${
-                testingWebhook || !webhookUrl || !isEnabled
+                testingWebhook || !webhookUrl
                   ? 'border-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  : 'border-green-300 text-green-700 hover:bg-green-50'
               }`}
             >
               {testingWebhook ? 'Testing...' : 'Test Webhook'}
