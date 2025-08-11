@@ -1,0 +1,45 @@
+name: Deploy Backend to Vercel
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        npm ci
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: backend
+        vercel-args: '--prod'
+        
+    - name: Comment deployment URL
+      if: success()
+      run: |
+        echo "🚀 Backend deployed successfully!"
+        echo "📋 Health check: https://linkedin-ai-social-media-bot-backend.vercel.app/health"
+        echo "🎤 Webhook URL: https://linkedin-ai-social-media-bot-backend.vercel.app/api/webhooks/meeting-recorder"

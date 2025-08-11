@@ -1,0 +1,51 @@
+name: Deploy Frontend to Vercel
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Build project
+      run: |
+        cd frontend
+        npm run build
+      env:
+        REACT_APP_API_URL: https://linkedin-ai-social-media-bot-backend.vercel.app
+    
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_FRONTEND_PROJECT_ID }}
+        working-directory: frontend
+        vercel-args: '--prod'
+        
+    - name: Comment deployment URL
+      if: success()
+      run: |
+        echo "🚀 Frontend deployed successfully!"
+        echo "🌐 App URL: https://linkedin-ai-social-media-bot.vercel.app"
