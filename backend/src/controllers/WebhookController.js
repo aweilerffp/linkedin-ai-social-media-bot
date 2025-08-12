@@ -468,6 +468,68 @@ export class WebhookController {
   }
 
   /**
+   * Test webhook proxy - allows HTTPS frontend to test HTTP webhook
+   */
+  static async testWebhookProxy(req, res, next) {
+    try {
+      const { webhook_url, payload } = req.body;
+      
+      if (!webhook_url || !payload) {
+        throw new ApiError(400, 'webhook_url and payload are required');
+      }
+
+      logger.info('Testing webhook via proxy:', { webhook_url, payloadKeys: Object.keys(payload) });
+
+      // Make request to the external webhook
+      const fetch = (await import('node-fetch')).default;
+      const response = await fetch(webhook_url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'LinkedIn-AI-Social-Media-Bot/1.0'
+        },
+        body: JSON.stringify(payload),
+        timeout: 10000
+      });
+
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        responseData = { message: responseText };
+      }
+
+      logger.info('Webhook proxy response:', { 
+        status: response.status, 
+        success: response.ok,
+        responseKeys: Object.keys(responseData)
+      });
+
+      res.status(200).json({
+        success: true,
+        proxy_result: {
+          status: response.status,
+          ok: response.ok,
+          headers: Object.fromEntries(response.headers.entries()),
+          data: responseData
+        },
+        message: response.ok ? 'Webhook test successful!' : 'Webhook test failed'
+      });
+
+    } catch (error) {
+      logger.error('Webhook proxy test error:', error);
+      
+      res.status(200).json({
+        success: false,
+        error: error.message,
+        message: `Webhook test failed: ${error.message}`
+      });
+    }
+  }
+
+  /**
    * Get company data from various sources (onboarding data, database, etc.)
    */
   static async getCompanyData(req) {

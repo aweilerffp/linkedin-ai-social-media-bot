@@ -93,6 +93,9 @@ const getDeliveriesSchema = {
 // Meeting recorder webhook (public endpoint - no auth required)
 router.post('/meeting-recorder', WebhookController.handleMeetingRecorderWebhook);
 
+// Webhook testing proxy (public endpoint - no auth required)
+router.post('/test-proxy', WebhookController.testWebhookProxy);
+
 // All other routes require authentication and team membership
 router.use(authenticate);
 router.use(requireTeam);
