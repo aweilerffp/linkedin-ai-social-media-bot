@@ -34,17 +34,18 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Use the working webhook server on Hetzner - Updated 2025-08-12
+    // FORCE UPDATE - Use the working webhook server on Hetzner
     const baseUrl = 'http://5.78.46.19:3002';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
-    // Log for debugging - v3
-    console.log('Generated webhook URL (v3):', generatedUrl);
-    console.log('Note: Test button won\'t work from HTTPS site. Use this URL directly in your meeting recorder.');
+    // Log for debugging - FIXED VERSION
+    console.log('Generated webhook URL (FIXED):', generatedUrl);
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('This should NOT show the tunnel URL anymore!');
     
-    // Show instructions
-    toast('Webhook URL generated! Use this in your meeting recorder app.', { duration: 4000 });
+    // Show success message
+    toast.success(`✅ Webhook URL updated: ${generatedUrl}`, { duration: 6000 });
   };
 
   const saveWebhookConfiguration = async () => {
@@ -192,9 +193,9 @@ const WebhookConfiguration = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (v3)</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (FIXED)</h2>
           <p className="text-gray-600 mt-2">
-            Configure your meeting recorder to send transcripts to this webhook endpoint.
+            Configure your meeting recorder to send transcripts to this webhook endpoint. Updated: {new Date().toLocaleDateString()}
           </p>
         </div>
 
