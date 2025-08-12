@@ -19,7 +19,10 @@ function SimpleDashboard() {
 
   const checkOnboardingStatus = async () => {
     try {
+      console.log('Checking onboarding status...');
       const status = await companyProfileService.checkOnboardingStatus();
+      console.log('Onboarding status result:', status);
+      
       setOnboardingStatus({
         checked: true,
         completed: status.completed,
@@ -27,7 +30,14 @@ function SimpleDashboard() {
         profile: status.profile,
         reason: status.reason
       });
-      console.log('Onboarding status:', status);
+      
+      // Debug localStorage state
+      console.log('localStorage debug:', {
+        onboarding_complete: localStorage.getItem('onboarding_complete'),
+        company_profile: localStorage.getItem('company_profile') ? 'exists' : 'missing',
+        token: localStorage.getItem('token') ? 'exists' : 'missing'
+      });
+      
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       setOnboardingStatus({

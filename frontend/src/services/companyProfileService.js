@@ -92,14 +92,23 @@ class CompanyProfileService {
 
   async checkOnboardingStatus() {
     try {
-      const profile = await this.getProfile();
+      console.log('CompanyProfileService: Checking onboarding status...');
       
-      // Also check the legacy localStorage flag
+      // Check localStorage flag first (most reliable for demo)
       const legacyComplete = localStorage.getItem('onboarding_complete') === 'true';
+      console.log('Legacy complete flag:', legacyComplete);
       
-      // If we have legacy flag but no profile, consider it incomplete
-      if (legacyComplete && !profile) {
-        return { completed: false, reason: 'legacy_flag_only' };
+      // Try to get profile
+      const profile = await this.getProfile();
+      console.log('Retrieved profile:', profile ? 'exists' : 'null');
+      
+      // If we have the completion flag, consider it complete
+      if (legacyComplete) {
+        return { 
+          completed: true, 
+          profile,
+          reason: 'onboarding_flag_set' 
+        };
       }
       
       // Check if we have a complete profile
@@ -122,28 +131,20 @@ class CompanyProfileService {
         };
       }
 
-      // Check if brand voice is configured
-      if (!profile.brand_voice || Object.keys(profile.brand_voice).length === 0) {
-        return { completed: false, reason: 'missing_brand_voice' };
-      }
-
-      // Check if content pillars are configured
-      if (!profile.content_pillars || profile.content_pillars.length === 0) {
-        return { completed: false, reason: 'missing_content_pillars' };
-      }
-
+      // If we have a company name, consider it complete enough
       return { 
         completed: true, 
         profile,
-        reason: 'complete' 
+        reason: 'profile_exists' 
       };
+      
     } catch (error) {
       console.error('Error checking onboarding status:', error);
-      // If API fails, fall back to localStorage check
+      // If everything fails, fall back to localStorage check
       const legacyComplete = localStorage.getItem('onboarding_complete') === 'true';
       return { 
         completed: legacyComplete, 
-        reason: legacyComplete ? 'legacy_complete' : 'api_error',
+        reason: legacyComplete ? 'fallback_complete' : 'api_error',
         error: error.message 
       };
     }

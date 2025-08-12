@@ -115,17 +115,21 @@ function OnboardingFlow() {
       // Save to database
       await companyProfileService.saveProfile(profileData);
       
-      // Clear any old localStorage data
-      localStorage.removeItem('onboarding_complete');
+      // Clear any old localStorage data (but keep onboarding_complete for fallback)
       localStorage.removeItem('company_data');
       localStorage.removeItem('brand_voice_data');
       localStorage.removeItem('connected_platforms');
       
+      // Set completion flag to ensure dashboard shows
+      localStorage.setItem('onboarding_complete', 'true');
+      
       toast.success('Company profile saved successfully!');
       console.log('Onboarding completed and saved to database');
       
-      // Reload to trigger app state change
-      window.location.reload();
+      // Small delay to ensure data is saved before reload
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
     } catch (error) {
       console.error('Error saving company profile:', error);
       toast.error('Failed to save profile: ' + error.message);
