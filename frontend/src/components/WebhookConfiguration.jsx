@@ -39,9 +39,12 @@ const WebhookConfiguration = () => {
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
-    // Log for debugging - v2
-    console.log('Generated webhook URL (v2):', generatedUrl);
-    console.log('Using Hetzner server, not tunnel');
+    // Log for debugging - v3
+    console.log('Generated webhook URL (v3):', generatedUrl);
+    console.log('Note: Test button won\'t work from HTTPS site. Use this URL directly in your meeting recorder.');
+    
+    // Show instructions
+    toast('Webhook URL generated! Use this in your meeting recorder app.', { duration: 4000 });
   };
 
   const saveWebhookConfiguration = async () => {
@@ -90,6 +93,37 @@ const WebhookConfiguration = () => {
       };
 
       console.log('Testing webhook:', webhookUrl, testPayload);
+
+      // Check if we're on HTTPS trying to call HTTP
+      const isHttps = window.location.protocol === 'https:';
+      const isHttpWebhook = webhookUrl.startsWith('http://');
+      
+      if (isHttps && isHttpWebhook) {
+        // Mixed content issue - provide instructions
+        toast.error('Cannot test HTTP webhook from HTTPS site due to browser security');
+        
+        // Still save the test event as failed
+        const newEvent = {
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          event_type: 'meeting.completed',
+          status: 'failed',
+          test: true,
+          error: 'Mixed content: HTTPS page cannot call HTTP webhook. Use curl or Postman to test instead.'
+        };
+
+        const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
+        events.unshift(newEvent);
+        localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
+        loadWebhookEvents();
+        
+        // Show curl command for manual testing
+        const curlCommand = `curl -X POST ${webhookUrl} -H "Content-Type: application/json" -d '${JSON.stringify(testPayload)}'`;
+        console.log('Test manually with:', curlCommand);
+        
+        toast('Use curl or Postman to test. Command copied to console.', { duration: 5000 });
+        return;
+      }
 
       // Make actual API call to test the webhook
       const response = await fetch(webhookUrl, {
@@ -158,9 +192,9 @@ const WebhookConfiguration = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (v2)</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (v3)</h2>
           <p className="text-gray-600 mt-2">
-            Configure your meeting recorder to send transcripts to this webhook endpoint. Using Hetzner server directly.
+            Configure your meeting recorder to send transcripts to this webhook endpoint.
           </p>
         </div>
 
@@ -216,17 +250,24 @@ const WebhookConfiguration = () => {
           </div>
 
           {/* Backend Deployment Info */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-green-900 mb-2">✅ Webhook Server Active</h3>
-            <p className="text-sm text-green-800 mb-3">
-              Webhook endpoint is live and ready to receive meeting transcripts:
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-yellow-900 mb-2">⚠️ Important: HTTPS/HTTP Limitation</h3>
+            <p className="text-sm text-yellow-800 mb-3">
+              The webhook server is running on HTTP. Due to browser security, you cannot test it from this HTTPS website.
             </p>
-            <div className="space-y-2 text-sm text-green-800">
-              <div>• <strong>Production Webhook:</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Status:</strong> Server running with PM2 process manager</div>
-              <div>• <strong>Auto-Generate:</strong> Instantly creates the correct webhook URL</div>
-              <div>• <strong>Processing:</strong> Generates marketing hooks from meeting transcripts</div>
-              <div>• <strong>Compatibility:</strong> Works with Read.ai, Zoom, and custom webhook formats</div>
+            <div className="space-y-2 text-sm text-yellow-800">
+              <div>• <strong>Webhook URL:</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>How to use:</strong> Copy this URL and paste it directly into your meeting recorder settings</div>
+              <div>• <strong>Testing:</strong> The webhook works perfectly when called directly from meeting recorders</div>
+              <div>• <strong>Manual test:</strong> Use curl or Postman with the URL above</div>
+              <div className="mt-3 p-3 bg-white rounded border border-yellow-300">
+                <strong>Test with curl:</strong>
+                <pre className="mt-2 text-xs overflow-x-auto">
+{`curl -X POST http://5.78.46.19:3002/api/webhooks/meeting-recorder \\
+  -H "Content-Type: application/json" \\
+  -d '{"event_type":"meeting.completed","data":{"meeting_id":"test","transcript":"Test"}}'`}
+                </pre>
+              </div>
             </div>
           </div>
 
