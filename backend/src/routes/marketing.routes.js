@@ -69,6 +69,33 @@ router.post('/transcripts/:transcriptId/reprocess',
 );
 
 /**
+ * @route   POST /api/marketing/company-profile
+ * @desc    Save company profile to database
+ * @access  Private
+ */
+router.post('/company-profile',
+  body('company_name').notEmpty().withMessage('Company name is required'),
+  body('industry').optional().isString(),
+  body('brand_voice').optional().isObject(),
+  body('content_pillars').optional().isArray(),
+  body('target_personas').optional().isArray(),
+  body('evaluation_questions').optional().isArray(),
+  body('visual_style').optional().isObject(),
+  body('slack_config').optional().isObject(),
+  validate,
+  MarketingHooksController.saveCompanyProfile
+);
+
+/**
+ * @route   GET /api/marketing/company-profile
+ * @desc    Get company profile from database
+ * @access  Private
+ */
+router.get('/company-profile',
+  MarketingHooksController.getCompanyProfile
+);
+
+/**
  * @route   GET /api/marketing/company-insights
  * @desc    Get company insights with RAG-enhanced context
  * @access  Private

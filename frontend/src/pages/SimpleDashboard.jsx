@@ -1,66 +1,63 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth.jsx';
+import { companyProfileService } from '../services/companyProfileService';
+import OnboardingFlow from './OnboardingFlow';
+import AIContentDashboard from '../components/AIContentDashboard';
 
 function SimpleDashboard() {
   const { user } = useAuth();
-  
+  const [onboardingStatus, setOnboardingStatus] = useState({ 
+    checked: false, 
+    completed: false, 
+    loading: true 
+  });
+
   useEffect(() => {
     console.log('SimpleDashboard rendered, user:', user);
+    checkOnboardingStatus();
   }, [user]);
 
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">
-        Welcome to Social Media Poster!
-      </h1>
-      
-      {user ? (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Hello, {user.name}! 👋</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-medium text-blue-900">Account Info</h3>
-              <p className="text-blue-700">Email: {user.email}</p>
-              <p className="text-blue-700">Role: {user.role}</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-medium text-green-900">Status</h3>
-              <p className="text-green-700">✅ Authentication Working</p>
-              <p className="text-green-700">✅ Dashboard Loading</p>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-red-50 p-4 rounded-lg">
-          <p className="text-red-700">No user data available</p>
-        </div>
-      )}
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            📝 Create Post
-          </button>
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-            📅 Schedule Post  
-          </button>
-          <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-            📊 View Analytics
-          </button>
+  const checkOnboardingStatus = async () => {
+    try {
+      const status = await companyProfileService.checkOnboardingStatus();
+      setOnboardingStatus({
+        checked: true,
+        completed: status.completed,
+        loading: false,
+        profile: status.profile,
+        reason: status.reason
+      });
+      console.log('Onboarding status:', status);
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setOnboardingStatus({
+        checked: true,
+        completed: false,
+        loading: false,
+        error: error.message
+      });
+    }
+  };
+
+  // Show loading while checking onboarding status
+  if (onboardingStatus.loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking your profile...</p>
         </div>
       </div>
-      
-      <div className="mt-6 text-center">
-        <p className="text-gray-600">
-          🎉 Congratulations! Your Social Media Poster is working perfectly!
-        </p>
-        <p className="text-sm text-gray-500 mt-2">
-          This is a simplified dashboard. The full dashboard with analytics will be available soon.
-        </p>
-      </div>
-    </div>
-  );
+    );
+  }
+
+  // Show onboarding if not completed
+  if (!onboardingStatus.completed) {
+    return <OnboardingFlow />;
+  }
+
+  // Show AI Content Dashboard if onboarding is complete
+  return <AIContentDashboard teamId={user?.teamId || 'default'} />;
 }
 
 export default SimpleDashboard;

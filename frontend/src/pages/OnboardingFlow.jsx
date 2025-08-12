@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuthFixed';
 import BrandVoiceAnalyzer from '../components/BrandVoiceAnalyzer';
+import { companyProfileService } from '../services/companyProfileService';
+import { toast } from 'react-hot-toast';
 
 const STEPS = {
   COMPANY_INFO: 'company_info',
@@ -21,6 +23,28 @@ function OnboardingFlow() {
   });
   const [brandVoiceData, setBrandVoiceData] = useState(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  // Check if we should migrate from old localStorage data
+  useEffect(() => {
+    const checkMigration = async () => {
+      try {
+        const hasLegacyData = localStorage.getItem('company_data');
+        if (hasLegacyData) {
+          const migrated = await companyProfileService.migrateFromLocalStorage();
+          if (migrated) {
+            toast.success('Your profile has been migrated and saved!');
+            // Redirect to dashboard
+            window.location.reload();
+          }
+        }
+      } catch (error) {
+        console.log('Migration not needed or failed:', error.message);
+      }
+    };
+    
+    checkMigration();
+  }, []);
 
   const handleCompanySubmit = (e) => {
     e.preventDefault();
@@ -44,18 +68,70 @@ function OnboardingFlow() {
     setCurrentStep(STEPS.COMPLETE);
   };
 
-  const handleComplete = () => {
-    // Mark onboarding as complete
-    localStorage.setItem('onboarding_complete', 'true');
-    localStorage.setItem('company_data', JSON.stringify(companyData));
-    localStorage.setItem('brand_voice_data', JSON.stringify(brandVoiceData));
-    localStorage.setItem('connected_platforms', JSON.stringify(connectedPlatforms));
-    
-    // In a real app, this would save to backend via API
-    console.log('Onboarding completed:', { companyData, brandVoiceData, connectedPlatforms });
-    
-    // Reload to trigger app state change
-    window.location.reload();
+  const handleComplete = async () => {
+    setSaving(true);
+    try {
+      // Convert to company profile format
+      const profileData = {
+        company_name: companyData.companyName,
+        industry: companyData.industry,
+        brand_voice: {
+          tone: brandVoiceData?.tone || [],
+          keywords: brandVoiceData?.keywords || [],
+          prohibited_terms: brandVoiceData?.prohibited_terms || []
+        },
+        content_pillars: brandVoiceData?.content_pillars || [
+          {
+            title: 'Industry Expertise',
+            description: `Insights and best practices in ${companyData.industry || 'your industry'}`,
+            keywords: []
+          }
+        ],
+        target_personas: brandVoiceData?.target_personas || [
+          {
+            name: 'Business Professionals',
+            pain_points: ['efficiency', 'growth', 'strategy'],
+            emotions: ['confidence', 'success', 'innovation']
+          }
+        ],
+        evaluation_questions: [
+          'What specific problem does this solve?',
+          'How does this align with our brand voice?',
+          'What action should the reader take?',
+          'Does this provide real value to our audience?'
+        ],
+        visual_style: {
+          colors: {
+            primary: '#1A73E8',
+            secondary: '#34A853',
+            accent: '#FBBC04'
+          }
+        },
+        slack_config: {
+          channel: '#social-media'
+        }
+      };
+
+      // Save to database
+      await companyProfileService.saveProfile(profileData);
+      
+      // Clear any old localStorage data
+      localStorage.removeItem('onboarding_complete');
+      localStorage.removeItem('company_data');
+      localStorage.removeItem('brand_voice_data');
+      localStorage.removeItem('connected_platforms');
+      
+      toast.success('Company profile saved successfully!');
+      console.log('Onboarding completed and saved to database');
+      
+      // Reload to trigger app state change
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving company profile:', error);
+      toast.error('Failed to save profile: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderBrandVoice = () => (
@@ -276,9 +352,21 @@ function OnboardingFlow() {
         
         <button
           onClick={handleComplete}
-          className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors text-lg font-medium"
+          disabled={saving}
+          className={`px-8 py-3 rounded-md text-lg font-medium transition-colors ${
+            saving 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white`}
         >
-          Go to Dashboard
+          {saving ? (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Saving Profile...
+            </div>
+          ) : (
+            'Go to Dashboard'
+          )}
         </button>
       </div>
     </div>

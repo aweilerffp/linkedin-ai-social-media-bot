@@ -395,6 +395,131 @@ export class MarketingHooksController {
   }
   
   /**
+   * Save company profile to database
+   */
+  static async saveCompanyProfile(req, res, next) {
+    try {
+      const { teamId, id: userId } = req.user;
+      const profileData = req.body;
+      
+      // Validate required fields
+      if (!profileData.company_name) {
+        throw new ApiError(400, 'Company name is required');
+      }
+      
+      // Check if profile already exists
+      const existingProfile = await pool.query(
+        'SELECT id FROM company_profiles WHERE team_id = $1',
+        [teamId]
+      );
+      
+      let result;
+      if (existingProfile.rows.length > 0) {
+        // Update existing profile
+        const updateQuery = `
+          UPDATE company_profiles 
+          SET 
+            company_name = $1,
+            industry = $2,
+            brand_voice = $3,
+            content_pillars = $4,
+            target_personas = $5,
+            evaluation_questions = $6,
+            visual_style = $7,
+            slack_config = $8,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE team_id = $9
+          RETURNING *
+        `;
+        
+        result = await pool.query(updateQuery, [
+          profileData.company_name,
+          profileData.industry || null,
+          JSON.stringify(profileData.brand_voice || {}),
+          JSON.stringify(profileData.content_pillars || []),
+          JSON.stringify(profileData.target_personas || []),
+          JSON.stringify(profileData.evaluation_questions || []),
+          JSON.stringify(profileData.visual_style || {}),
+          JSON.stringify(profileData.slack_config || {}),
+          teamId
+        ]);
+      } else {
+        // Create new profile
+        const insertQuery = `
+          INSERT INTO company_profiles (
+            team_id, company_name, industry, brand_voice,
+            content_pillars, target_personas, evaluation_questions,
+            visual_style, slack_config
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+          RETURNING *
+        `;
+        
+        result = await pool.query(insertQuery, [
+          teamId,
+          profileData.company_name,
+          profileData.industry || null,
+          JSON.stringify(profileData.brand_voice || {}),
+          JSON.stringify(profileData.content_pillars || []),
+          JSON.stringify(profileData.target_personas || []),
+          JSON.stringify(profileData.evaluation_questions || []),
+          JSON.stringify(profileData.visual_style || {}),
+          JSON.stringify(profileData.slack_config || {})
+        ]);
+      }
+      
+      logger.info('Company profile saved', {
+        teamId,
+        userId,
+        companyName: profileData.company_name,
+        profileId: result.rows[0].id
+      });
+      
+      res.json({
+        success: true,
+        data: result.rows[0],
+        message: 'Company profile saved successfully'
+      });
+      
+    } catch (error) {
+      logger.error('Error saving company profile:', error);
+      next(error);
+    }
+  }
+  
+  /**
+   * Get company profile for the team
+   */
+  static async getCompanyProfile(req, res, next) {
+    try {
+      const { teamId } = req.user;
+      
+      const query = `
+        SELECT * FROM company_profiles 
+        WHERE team_id = $1
+      `;
+      
+      const result = await pool.query(query, [teamId]);
+      
+      if (result.rows.length === 0) {
+        return res.json({
+          success: true,
+          data: null,
+          message: 'No company profile found'
+        });
+      }
+      
+      res.json({
+        success: true,
+        data: result.rows[0]
+      });
+      
+    } catch (error) {
+      logger.error('Error fetching company profile:', error);
+      next(error);
+    }
+  }
+
+  /**
    * Get company insights (RAG-enhanced context)
    */
   static async getCompanyInsights(req, res, next) {
