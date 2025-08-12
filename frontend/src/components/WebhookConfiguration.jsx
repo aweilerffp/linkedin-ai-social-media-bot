@@ -184,8 +184,8 @@ const WebhookConfiguration = () => {
                 Auto-Generate
               </button>
             </div>
-            <div className="mt-2 text-sm text-orange-600">
-              ⚠️ Please update this URL to point to your deployed backend API endpoint
+            <div className="mt-2 text-sm text-green-600">
+              ✅ Auto-generate will create the correct webhook URL for you
             </div>
             <p className="text-sm text-gray-500 mt-2">
               This is the URL your meeting recorder should POST transcript data to
