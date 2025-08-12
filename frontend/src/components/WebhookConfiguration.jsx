@@ -34,13 +34,14 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Use the working webhook server on Hetzner
+    // Use the working webhook server on Hetzner - Updated 2025-08-12
     const baseUrl = 'http://5.78.46.19:3002';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
-    // Log for debugging
-    console.log('Generated webhook URL:', generatedUrl);
+    // Log for debugging - v2
+    console.log('Generated webhook URL (v2):', generatedUrl);
+    console.log('Using Hetzner server, not tunnel');
   };
 
   const saveWebhookConfiguration = async () => {
@@ -157,9 +158,9 @@ const WebhookConfiguration = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (v2)</h2>
           <p className="text-gray-600 mt-2">
-            Configure your meeting recorder to send transcripts to this webhook endpoint. Test button is now enabled!
+            Configure your meeting recorder to send transcripts to this webhook endpoint. Using Hetzner server directly.
           </p>
         </div>
 
