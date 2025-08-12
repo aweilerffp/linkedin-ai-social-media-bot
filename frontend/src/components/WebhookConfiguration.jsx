@@ -36,7 +36,7 @@ const WebhookConfiguration = () => {
   const generateWebhookUrl = () => {
     // Use HTTPS tunnel for frontend testing (solves mixed content issues)
     // This tunnel proxies to the HTTP Hetzner server
-    const baseUrl = 'https://3d76f8e859cd94.lhr.life';
+    const baseUrl = 'https://f9ad5cd21eec28.lhr.life';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
@@ -222,10 +222,11 @@ const WebhookConfiguration = () => {
               Webhook endpoints are now available with full HTTPS support:
             </p>
             <div className="space-y-2 text-sm text-green-800">
-              <div>• <strong>HTTPS (Production):</strong> <code>https://3d76f8e859cd94.lhr.life/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>HTTPS (Production):</strong> <code>https://f9ad5cd21eec28.lhr.life/api/webhooks/meeting-recorder</code></div>
               <div>• <strong>HTTP (Fallback):</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Auto-Generate:</strong> Uses HTTPS endpoint to prevent mixed content blocking</div>
-              <div>• <strong>Meeting Recorders:</strong> Can use either HTTP or HTTPS endpoint</div>
+              <div>• <strong>Auto-Generate:</strong> Uses HTTPS endpoint with AI processing enabled</div>
+              <div>• <strong>AI Integration:</strong> Real-time marketing hook generation with company-specific prompts</div>
+              <div>• <strong>Meeting Recorders:</strong> Supports Read.ai, Zoom, and custom webhook formats</div>
             </div>
           </div>
 
