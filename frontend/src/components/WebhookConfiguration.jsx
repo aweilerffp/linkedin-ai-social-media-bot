@@ -5,7 +5,6 @@ const WebhookConfiguration = () => {
   const [webhookUrl, setWebhookUrl] = useState('');
   const [isEnabled, setIsEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [testingWebhook, setTestingWebhook] = useState(false);
   const [webhookEvents, setWebhookEvents] = useState([]);
 
   useEffect(() => {
@@ -72,146 +71,6 @@ const WebhookConfiguration = () => {
     }
   };
 
-  const testWebhook = async () => {
-    if (!webhookUrl) {
-      toast.error('Please enter a webhook URL first');
-      return;
-    }
-
-    setTestingWebhook(true);
-    try {
-      // Create test payload
-      const testPayload = {
-        event_type: 'meeting.completed',
-        timestamp: new Date().toISOString(),
-        data: {
-          meeting_id: 'test_' + Date.now(),
-          transcript: 'This is a test transcript from the meeting recorder webhook. We discussed our new product features and how to improve user engagement through better onboarding experiences.',
-          duration: 1800, // 30 minutes
-          participants: ['test@example.com'],
-          title: 'Test Meeting - Product Strategy'
-        }
-      };
-
-      console.log('Testing webhook:', webhookUrl, testPayload);
-
-      // Check if we're on HTTPS trying to call HTTP
-      const isHttps = window.location.protocol === 'https:';
-      const isHttpWebhook = webhookUrl.startsWith('http://');
-      
-      let response;
-      if (isHttps && isHttpWebhook) {
-        // Show clear explanation instead of confusing simulation
-        toast.error('Cannot test HTTP webhook from HTTPS website due to browser security', { duration: 8000 });
-        
-        // Add informational event
-        const newEvent = {
-          id: Date.now(),
-          timestamp: new Date().toISOString(),
-          event_type: 'meeting.completed',
-          status: 'info',
-          test: true,
-          message: 'Browser security prevents HTTPS→HTTP requests. Webhook works when called by meeting recorders.'
-        };
-
-        const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
-        events.unshift(newEvent);
-        localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
-        loadWebhookEvents();
-        
-        // Show helpful information
-        const curlCommand = `curl -X POST ${webhookUrl} -H "Content-Type: application/json" -d '${JSON.stringify(testPayload)}'`;
-        console.log('✅ Webhook URL is working! Test manually with:', curlCommand);
-        
-        // Show success info after brief delay
-        setTimeout(() => {
-          toast.success('✅ Webhook URL is correct and server is running! Meeting recorders can use this URL.', { duration: 8000 });
-        }, 2000);
-        
-        return;
-      } else {
-        // Direct call for HTTPS webhooks or HTTP sites
-        response = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(testPayload)
-        });
-      }
-
-      let responseData;
-      const responseText = await response.text();
-      
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        responseData = { message: responseText };
-      }
-
-      console.log('Webhook response:', response.status, responseData);
-
-      // Handle proxy response format
-      let actualWebhookData, actualWebhookStatus, wasProxied = false;
-      
-      if (responseData.proxy_result) {
-        // This was a proxied request
-        wasProxied = true;
-        actualWebhookData = responseData.proxy_result.data;
-        actualWebhookStatus = responseData.proxy_result.status;
-        console.log('Proxied webhook response:', actualWebhookStatus, actualWebhookData);
-      } else {
-        // Direct request
-        actualWebhookData = responseData;
-        actualWebhookStatus = response.status;
-      }
-
-      // Add test event to local events
-      const newEvent = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        event_type: 'meeting.completed',
-        status: (wasProxied ? actualWebhookStatus === 200 : response.ok) ? 'success' : 'failed',
-        test: true,
-        response_status: actualWebhookStatus,
-        response_data: actualWebhookData,
-        proxied: wasProxied
-      };
-
-      const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
-      events.unshift(newEvent);
-      localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
-      loadWebhookEvents();
-
-      const isSuccess = wasProxied ? actualWebhookStatus === 200 : response.ok;
-      const hooksCount = actualWebhookData?.data?.marketing_hooks?.length || actualWebhookData?.marketing_hooks?.length || 0;
-
-      if (isSuccess) {
-        toast.success(`✅ Webhook test successful! Generated ${hooksCount} marketing hooks.`, { duration: 6000 });
-      } else {
-        toast.error(`❌ Webhook test failed: ${actualWebhookData?.error || responseData?.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Test error:', error);
-      
-      // Add failed event to local events
-      const newEvent = {
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        event_type: 'meeting.completed',
-        status: 'failed',
-        test: true,
-        error: error.message
-      };
-
-      const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
-      events.unshift(newEvent);
-      localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
-      loadWebhookEvents();
-
-      toast.error(`Webhook test failed: ${error.message}`);
-    } finally {
-      setTestingWebhook(false);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -275,22 +134,22 @@ const WebhookConfiguration = () => {
           </div>
 
           {/* Backend Deployment Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-blue-900 mb-2">ℹ️ Webhook Server Status</h3>
-            <p className="text-sm text-blue-800 mb-3">
-              Webhook endpoint is live and ready to receive meeting transcripts.
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-green-900 mb-2">✅ Webhook Server Active</h3>
+            <p className="text-sm text-green-800 mb-3">
+              Your webhook endpoint is live and processing meeting transcripts from real meeting recorders.
             </p>
-            <div className="space-y-2 text-sm text-blue-800">
+            <div className="space-y-2 text-sm text-green-800">
               <div>• <strong>Webhook URL:</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Status:</strong> ✅ Server running and tested working</div>
-              <div>• <strong>Test button:</strong> Limited by browser security (HTTPS → HTTP blocked)</div>
-              <div>• <strong>Actual usage:</strong> Works perfectly when meeting recorders call it directly</div>
+              <div>• <strong>Status:</strong> ✅ Active and processing requests</div>
+              <div>• <strong>Testing:</strong> Configure your meeting recorder to test the webhook</div>
+              <div>• <strong>Processing:</strong> Generates marketing hooks automatically from transcripts</div>
               <div>• <strong>Compatibility:</strong> Read.ai, Zoom, Otter.ai, and custom webhook formats</div>
             </div>
             
-            <div className="mt-4 p-3 bg-blue-100 rounded border border-blue-300">
-              <strong>Why test button doesn't work:</strong>
-              <p className="text-xs mt-1">Your app runs on HTTPS, but the webhook is HTTP. Browsers block this for security. Meeting recorders don't have this limitation and work perfectly.</p>
+            <div className="mt-4 p-3 bg-green-100 rounded border border-green-300">
+              <strong>How to test:</strong>
+              <p className="text-xs mt-1">Configure this webhook URL in your meeting recorder app (Read.ai, Zoom, etc.). The webhook will automatically process transcripts and return marketing hooks.</p>
             </div>
           </div>
 
@@ -327,18 +186,6 @@ const WebhookConfiguration = () => {
               }`}
             >
               {isSaving ? 'Saving...' : 'Save Configuration'}
-            </button>
-            
-            <button
-              onClick={testWebhook}
-              disabled={testingWebhook || !webhookUrl}
-              className={`px-6 py-2 rounded-md font-medium border ${
-                testingWebhook || !webhookUrl
-                  ? 'border-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'border-green-300 text-green-700 hover:bg-green-50'
-              }`}
-            >
-              {testingWebhook ? 'Testing...' : 'Test Webhook'}
             </button>
           </div>
         </div>
