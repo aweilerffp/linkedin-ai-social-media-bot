@@ -193,9 +193,9 @@ const WebhookConfiguration = () => {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (FIXED)</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Meeting Recorder Webhook (DEPLOYMENT {new Date().getTime()})</h2>
           <p className="text-gray-600 mt-2">
-            Configure your meeting recorder to send transcripts to this webhook endpoint. Updated: {new Date().toLocaleDateString()}
+            Configure your meeting recorder to send transcripts. Deployed: {new Date().toLocaleString()}
           </p>
         </div>
 
