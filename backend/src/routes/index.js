@@ -4,6 +4,7 @@ import postsRoutes from './posts.routes.js';
 import webhookRoutes from './webhook.routes.js';
 import { monitoringRoutes } from './monitoring.routes.js';
 import aiRoutes from './ai.routes.js';
+import marketingRoutes from './marketing.routes.js';
 import { getQueueStats } from '../services/queue/QueueService.js';
 import { globalRateLimit, ipRateLimit } from '../middleware/rateLimiting.js';
 
@@ -52,5 +53,6 @@ router.use('/posts', postsRoutes);
 router.use('/webhooks', webhookRoutes);
 router.use('/monitoring', monitoringRoutes);
 router.use('/ai', aiRoutes);
+router.use('/marketing', marketingRoutes);
 
 export default router;

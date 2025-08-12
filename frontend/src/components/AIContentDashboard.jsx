@@ -19,20 +19,57 @@ const AIContentDashboard = ({ teamId }) => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      // This would call your API endpoints
-      const response = await fetch(`/api/ai/dashboard/${teamId}`, {
+      // Use the new marketing endpoints
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/marketing/dashboard/${teamId || 'default'}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
+        const result = await response.json();
+        if (result.success) {
+          setDashboardData(result.data);
+        }
+      } else {
+        // If marketing endpoint fails, try fallback to AI endpoint
+        const fallbackResponse = await fetch(`${apiUrl}/api/ai/dashboard/${teamId || 'default'}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          const data = await fallbackResponse.json();
+          setDashboardData(data);
+        }
       }
     } catch (error) {
       toast.error('Failed to load dashboard data');
       console.error('Dashboard load error:', error);
+      
+      // Load mock data if API fails
+      setDashboardData({
+        company_profile: {
+          company_name: 'Demo Company',
+          industry: 'Technology'
+        },
+        recent_transcripts: [],
+        content_pipeline: [],
+        queue_status: [],
+        performance_metrics: {
+          total_transcripts: 0,
+          total_insights: 0,
+          total_posts: 0,
+          queued_posts: 0,
+          published_posts: 0,
+          avg_engagement_rate: 0,
+          pillar_performance: []
+        }
+      });
     } finally {
       setLoading(false);
     }
