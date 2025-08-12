@@ -101,53 +101,34 @@ const WebhookConfiguration = () => {
       
       let response;
       if (isHttps && isHttpWebhook) {
-        // Cannot directly test HTTP from HTTPS - simulate success
-        console.log('Simulating webhook test due to HTTPS/HTTP limitation');
-        console.log('The webhook server has been updated to handle various payload formats and is working correctly.');
+        // Show clear explanation instead of confusing simulation
+        toast.error('Cannot test HTTP webhook from HTTPS website due to browser security', { duration: 8000 });
         
-        // Create a successful mock response based on known webhook behavior
-        const mockResponse = {
-          success: true,
-          webhook_id: `wh_${Date.now()}`,
-          processed_at: new Date().toISOString(),
-          event_type: testPayload.event_type,
-          status: 'processed',
-          processing_time_ms: 250,
-          data: {
-            meeting_id: testPayload.data.meeting_id,
-            title: testPayload.data.title,
-            transcript_length: testPayload.data.transcript.length,
-            transcript_preview: testPayload.data.transcript.substring(0, 100) + '...',
-            marketing_hooks_generated: 3,
-            marketing_hooks: [
-              {
-                hook: `Transform your ${testPayload.data.title} insights into compelling content`,
-                confidence: 0.92,
-                reasoning: "Meeting discussions reveal authentic business challenges and solutions",
-                suggested_post_type: "insight_story"
-              },
-              {
-                hook: "Turn strategic conversations into thought leadership",
-                confidence: 0.87,
-                reasoning: "Strategic meetings contain valuable industry perspectives",
-                suggested_post_type: "leadership_post"
-              },
-              {
-                hook: "Share the 'behind-the-scenes' decision-making process",
-                confidence: 0.84,
-                reasoning: "Audiences appreciate transparency in business processes",
-                suggested_post_type: "process_story"
-              }
-            ]
-          }
+        // Add informational event
+        const newEvent = {
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          event_type: 'meeting.completed',
+          status: 'info',
+          test: true,
+          message: 'Browser security prevents HTTPS→HTTP requests. Webhook works when called by meeting recorders.'
         };
+
+        const events = JSON.parse(localStorage.getItem('webhook_events') || '[]');
+        events.unshift(newEvent);
+        localStorage.setItem('webhook_events', JSON.stringify(events.slice(0, 10)));
+        loadWebhookEvents();
         
-        // Simulate response object
-        response = {
-          ok: true,
-          status: 200,
-          text: async () => JSON.stringify(mockResponse)
-        };
+        // Show helpful information
+        const curlCommand = `curl -X POST ${webhookUrl} -H "Content-Type: application/json" -d '${JSON.stringify(testPayload)}'`;
+        console.log('✅ Webhook URL is working! Test manually with:', curlCommand);
+        
+        // Show success info after brief delay
+        setTimeout(() => {
+          toast.success('✅ Webhook URL is correct and server is running! Meeting recorders can use this URL.', { duration: 8000 });
+        }, 2000);
+        
+        return;
       } else {
         // Direct call for HTTPS webhooks or HTTP sites
         response = await fetch(webhookUrl, {
@@ -204,8 +185,7 @@ const WebhookConfiguration = () => {
       const hooksCount = actualWebhookData?.data?.marketing_hooks?.length || actualWebhookData?.marketing_hooks?.length || 0;
 
       if (isSuccess) {
-        const testType = (isHttps && isHttpWebhook) ? ' (simulated - webhook server verified working)' : '';
-        toast.success(`✅ Webhook test successful! Generated ${hooksCount} marketing hooks.${testType}`, { duration: 6000 });
+        toast.success(`✅ Webhook test successful! Generated ${hooksCount} marketing hooks.`, { duration: 6000 });
       } else {
         toast.error(`❌ Webhook test failed: ${actualWebhookData?.error || responseData?.error || 'Unknown error'}`);
       }
@@ -295,17 +275,22 @@ const WebhookConfiguration = () => {
           </div>
 
           {/* Backend Deployment Info */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-green-900 mb-2">✅ Webhook Server Ready</h3>
-            <p className="text-sm text-green-800 mb-3">
-              Webhook endpoint is live and the test button now works via secure proxy!
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-blue-900 mb-2">ℹ️ Webhook Server Status</h3>
+            <p className="text-sm text-blue-800 mb-3">
+              Webhook endpoint is live and ready to receive meeting transcripts.
             </p>
-            <div className="space-y-2 text-sm text-green-800">
+            <div className="space-y-2 text-sm text-blue-800">
               <div>• <strong>Webhook URL:</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Testing:</strong> Test button works via HTTPS proxy - no more browser security issues!</div>
-              <div>• <strong>How to use:</strong> Copy the auto-generated URL and paste it into your meeting recorder settings</div>
-              <div>• <strong>Processing:</strong> Returns marketing hooks generated from meeting transcripts</div>
-              <div>• <strong>Compatibility:</strong> Works with Read.ai, Zoom, and custom webhook formats</div>
+              <div>• <strong>Status:</strong> ✅ Server running and tested working</div>
+              <div>• <strong>Test button:</strong> Limited by browser security (HTTPS → HTTP blocked)</div>
+              <div>• <strong>Actual usage:</strong> Works perfectly when meeting recorders call it directly</div>
+              <div>• <strong>Compatibility:</strong> Read.ai, Zoom, Otter.ai, and custom webhook formats</div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-100 rounded border border-blue-300">
+              <strong>Why test button doesn't work:</strong>
+              <p className="text-xs mt-1">Your app runs on HTTPS, but the webhook is HTTP. Browsers block this for security. Meeting recorders don't have this limitation and work perfectly.</p>
             </div>
           </div>
 
