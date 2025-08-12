@@ -34,9 +34,8 @@ const WebhookConfiguration = () => {
   };
 
   const generateWebhookUrl = () => {
-    // Use HTTPS tunnel for frontend testing (solves mixed content issues)
-    // This tunnel proxies to the HTTP Hetzner server
-    const baseUrl = 'https://f9ad5cd21eec28.lhr.life';
+    // Use the working webhook server on Hetzner
+    const baseUrl = 'http://5.78.46.19:3002';
     const generatedUrl = `${baseUrl}/api/webhooks/meeting-recorder`;
     setWebhookUrl(generatedUrl);
     
@@ -217,16 +216,16 @@ const WebhookConfiguration = () => {
 
           {/* Backend Deployment Info */}
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-green-900 mb-2">✅ HTTPS Webhook Ready</h3>
+            <h3 className="text-lg font-medium text-green-900 mb-2">✅ Webhook Server Active</h3>
             <p className="text-sm text-green-800 mb-3">
-              Webhook endpoints are now available with full HTTPS support:
+              Webhook endpoint is live and ready to receive meeting transcripts:
             </p>
             <div className="space-y-2 text-sm text-green-800">
-              <div>• <strong>HTTPS (Production):</strong> <code>https://f9ad5cd21eec28.lhr.life/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>HTTP (Fallback):</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
-              <div>• <strong>Auto-Generate:</strong> Uses HTTPS endpoint with AI processing enabled</div>
-              <div>• <strong>AI Integration:</strong> Real-time marketing hook generation with company-specific prompts</div>
-              <div>• <strong>Meeting Recorders:</strong> Supports Read.ai, Zoom, and custom webhook formats</div>
+              <div>• <strong>Production Webhook:</strong> <code>http://5.78.46.19:3002/api/webhooks/meeting-recorder</code></div>
+              <div>• <strong>Status:</strong> Server running with PM2 process manager</div>
+              <div>• <strong>Auto-Generate:</strong> Instantly creates the correct webhook URL</div>
+              <div>• <strong>Processing:</strong> Generates marketing hooks from meeting transcripts</div>
+              <div>• <strong>Compatibility:</strong> Works with Read.ai, Zoom, and custom webhook formats</div>
             </div>
           </div>
 
