@@ -104,4 +104,56 @@ router.get('/company-insights',
   MarketingHooksController.getCompanyInsights
 );
 
+/**
+ * @route   POST /api/marketing/generate-post
+ * @desc    Generate LinkedIn post from marketing hook
+ * @access  Private
+ */
+router.post('/generate-post',
+  body('hook_id').isUUID().withMessage('Valid hook ID is required'),
+  body('post_length').optional().isIn(['short', 'medium', 'long']),
+  body('include_hashtags').optional().isBoolean(),
+  body('include_emojis').optional().isBoolean(),
+  body('call_to_action').optional().isIn(['engage', 'visit', 'contact', 'learn']),
+  validate,
+  MarketingHooksController.generateLinkedInPost
+);
+
+/**
+ * @route   POST /api/marketing/generate-variations
+ * @desc    Generate multiple post variations from a hook
+ * @access  Private
+ */
+router.post('/generate-variations',
+  body('hook_id').isUUID().withMessage('Valid hook ID is required'),
+  body('variation_count').optional().isInt({ min: 1, max: 5 }),
+  validate,
+  MarketingHooksController.generatePostVariations
+);
+
+/**
+ * @route   POST /api/marketing/enhance-post
+ * @desc    Enhance an existing post with better formatting
+ * @access  Private
+ */
+router.post('/enhance-post',
+  body('post_content').notEmpty().withMessage('Post content is required'),
+  validate,
+  MarketingHooksController.enhancePost
+);
+
+/**
+ * @route   POST /api/marketing/content-calendar
+ * @desc    Generate content calendar from hooks
+ * @access  Private
+ */
+router.post('/content-calendar',
+  body('hook_ids').isArray().withMessage('Hook IDs array is required'),
+  body('posts_per_week').optional().isInt({ min: 1, max: 7 }),
+  body('weeks').optional().isInt({ min: 1, max: 8 }),
+  body('start_date').optional().isISO8601(),
+  validate,
+  MarketingHooksController.generateContentCalendar
+);
+
 export default router;

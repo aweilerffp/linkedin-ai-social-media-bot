@@ -5,6 +5,7 @@ import Layout from './components/common/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/SimpleDashboard';
 import PostsPage from './pages/PostsPage';
+import AIContentPage from './pages/AIContentPage';
 import SchedulePage from './pages/SchedulePage';
 import TeamsPage from './pages/TeamsPage';
 import SettingsPage from './pages/SettingsPage';
@@ -33,6 +34,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/posts" element={<PostsPage />} />
+          <Route path="/ai-content" element={<AIContentPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/teams" element={<TeamsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

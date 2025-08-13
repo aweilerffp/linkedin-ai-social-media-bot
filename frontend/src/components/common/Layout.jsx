@@ -8,6 +8,7 @@ function Layout() {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
     { name: 'Posts', href: '/posts', icon: '📝' },
+    { name: 'AI Content', href: '/ai-content', icon: '🤖' },
     { name: 'Schedule', href: '/schedule', icon: '📅' },
     { name: 'Analytics', href: '/analytics', icon: '📊' },
     { name: 'Settings', href: '/settings', icon: '⚙️' },

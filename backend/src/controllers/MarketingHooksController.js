@@ -1,5 +1,6 @@
 import { ApiError } from '../middleware/errorHandler.js';
 import { logger } from '../utils/logger.js';
+import { linkedInPostGenerator } from '../services/ai/LinkedInPostGenerator.js';
 import pool from '../config/database.js';
 
 export class MarketingHooksController {
@@ -583,6 +584,218 @@ export class MarketingHooksController {
       
     } catch (error) {
       logger.error('Error fetching company insights:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Generate LinkedIn post from marketing hook
+   */
+  static async generateLinkedInPost(req, res, next) {
+    try {
+      const { teamId } = req.user;
+      const {
+        hook_id,
+        post_length = 'medium',
+        include_hashtags = true,
+        include_emojis = true,
+        call_to_action = 'engage'
+      } = req.body;
+
+      // Get marketing hook
+      const hookQuery = `
+        SELECT * FROM marketing_hooks
+        WHERE id = $1 AND team_id = $2
+      `;
+      const hookResult = await pool.query(hookQuery, [hook_id, teamId]);
+      
+      if (hookResult.rows.length === 0) {
+        throw new ApiError(404, 'Marketing hook not found');
+      }
+
+      const hook = hookResult.rows[0];
+
+      // Get company profile
+      const companyQuery = `
+        SELECT * FROM company_profiles
+        WHERE team_id = $1
+      `;
+      const companyResult = await pool.query(companyQuery, [teamId]);
+      
+      if (companyResult.rows.length === 0) {
+        throw new ApiError(400, 'Company profile not found. Please complete onboarding first.');
+      }
+
+      const companyProfile = companyResult.rows[0];
+
+      // Generate LinkedIn post
+      const postResult = await linkedInPostGenerator.generatePost(hook, companyProfile, {
+        postLength: post_length,
+        includeHashtags: include_hashtags,
+        includeEmojis: include_emojis,
+        callToAction: call_to_action
+      });
+
+      logger.info('LinkedIn post generated', {
+        hookId: hook_id,
+        teamId,
+        characterCount: postResult.metadata.character_count
+      });
+
+      res.json({
+        success: true,
+        data: {
+          hook_id,
+          generated_post: postResult,
+          original_hook: {
+            pillar: hook.pillar,
+            linkedin_post: hook.linkedin_post
+          }
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error generating LinkedIn post:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Generate multiple post variations from a hook
+   */
+  static async generatePostVariations(req, res, next) {
+    try {
+      const { teamId } = req.user;
+      const { hook_id, variation_count = 3 } = req.body;
+
+      // Get marketing hook and company profile
+      const hookQuery = `
+        SELECT mh.*, cp.*
+        FROM marketing_hooks mh
+        JOIN company_profiles cp ON mh.team_id = cp.team_id
+        WHERE mh.id = $1 AND mh.team_id = $2
+      `;
+      const result = await pool.query(hookQuery, [hook_id, teamId]);
+      
+      if (result.rows.length === 0) {
+        throw new ApiError(404, 'Marketing hook or company profile not found');
+      }
+
+      const { 0: hook, ...companyProfile } = result.rows[0];
+
+      // Generate variations
+      const variations = await linkedInPostGenerator.generateVariations(
+        hook, 
+        companyProfile, 
+        variation_count
+      );
+
+      res.json({
+        success: true,
+        data: variations
+      });
+
+    } catch (error) {
+      logger.error('Error generating post variations:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Enhance an existing post with better formatting
+   */
+  static async enhancePost(req, res, next) {
+    try {
+      const { teamId } = req.user;
+      const { post_content } = req.body;
+
+      // Get company profile
+      const companyQuery = `
+        SELECT * FROM company_profiles
+        WHERE team_id = $1
+      `;
+      const companyResult = await pool.query(companyQuery, [teamId]);
+      
+      if (companyResult.rows.length === 0) {
+        throw new ApiError(400, 'Company profile not found');
+      }
+
+      const companyProfile = companyResult.rows[0];
+
+      // Enhance post
+      const enhancedResult = await linkedInPostGenerator.enhancePost(
+        post_content,
+        companyProfile
+      );
+
+      res.json({
+        success: true,
+        data: enhancedResult
+      });
+
+    } catch (error) {
+      logger.error('Error enhancing post:', error);
+      next(error);
+    }
+  }
+
+  /**
+   * Generate content calendar from hooks
+   */
+  static async generateContentCalendar(req, res, next) {
+    try {
+      const { teamId } = req.user;
+      const {
+        hook_ids,
+        posts_per_week = 3,
+        weeks = 2,
+        start_date
+      } = req.body;
+
+      // Get marketing hooks
+      const hookQuery = `
+        SELECT * FROM marketing_hooks
+        WHERE id = ANY($1) AND team_id = $2
+        ORDER BY insight_score DESC
+      `;
+      const hooksResult = await pool.query(hookQuery, [hook_ids, teamId]);
+
+      if (hooksResult.rows.length === 0) {
+        throw new ApiError(404, 'No marketing hooks found');
+      }
+
+      // Get company profile
+      const companyQuery = `
+        SELECT * FROM company_profiles
+        WHERE team_id = $1
+      `;
+      const companyResult = await pool.query(companyQuery, [teamId]);
+      
+      if (companyResult.rows.length === 0) {
+        throw new ApiError(400, 'Company profile not found');
+      }
+
+      const hooks = hooksResult.rows;
+      const companyProfile = companyResult.rows[0];
+
+      // Generate content calendar
+      const calendar = await linkedInPostGenerator.generateContentCalendar(
+        hooks,
+        companyProfile,
+        {
+          postsPerWeek: posts_per_week,
+          weeks,
+          startDate: start_date ? new Date(start_date) : new Date()
+        }
+      );
+
+      res.json({
+        success: true,
+        data: calendar
+      });
+
+    } catch (error) {
+      logger.error('Error generating content calendar:', error);
       next(error);
     }
   }
